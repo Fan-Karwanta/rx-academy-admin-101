@@ -14,26 +14,34 @@ export const AuthProvider = ({ children }) => {
 
   // Check authentication status on mount
   useEffect(() => {
-    const checkAuth = () => {
-      const isLoggedIn = authService.isLoggedIn();
-      setIsAuthenticated(isLoggedIn);
-      
-      if (isLoggedIn) {
-        setCurrentUser(authService.getCurrentUser());
+    const checkAuth = async () => {
+      try {
+        const user = await authService.verifyAuth();
+        if (user) {
+          setIsAuthenticated(true);
+          setCurrentUser(user);
+        } else {
+          setIsAuthenticated(false);
+          setCurrentUser(null);
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        setIsAuthenticated(false);
+        setCurrentUser(null);
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
     
     checkAuth();
   }, []);
 
   // Login function
-  const login = async (email, password) => {
+  const login = async (username, password) => {
     try {
-      const response = await authService.login(email, password);
+      const response = await authService.login(username, password);
       setIsAuthenticated(true);
-      setCurrentUser(response.user);
+      setCurrentUser(response.admin);
       navigate("/");
       return true;
     } catch (error) {
@@ -43,11 +51,16 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Logout function
-  const logout = () => {
-    authService.logout();
-    setIsAuthenticated(false);
-    setCurrentUser(null);
-    navigate("/login");
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setIsAuthenticated(false);
+      setCurrentUser(null);
+      navigate("/login");
+    }
   };
 
   // Auth context value

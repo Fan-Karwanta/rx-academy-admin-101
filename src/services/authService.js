@@ -1,25 +1,28 @@
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
 
+// Configure axios to send cookies with requests
+axios.defaults.withCredentials = true;
+
 // Auth service functions
 export const authService = {
   // Login admin
-  login: async (email, password) => {
+  login: async (username, password) => {
     try {
-      console.log('Attempting login with:', { email });
+      console.log('Attempting login with:', { username });
       
-      // Use the special admin login endpoint
+      // Use the admin login endpoint with username
       const response = await axios.post(`${API_BASE_URL}/admin/auth/login`, {
-        email,
+        username,
         password
+      }, {
+        withCredentials: true
       });
       
       console.log('Login response:', response.data);
       
-      // Store tokens in localStorage
-      localStorage.setItem('admin_access_token', response.data.access_token);
-      localStorage.setItem('admin_refresh_token', response.data.refresh_token);
-      localStorage.setItem('admin_user', JSON.stringify(response.data.user));
+      // Store user info in localStorage (token is in HTTP-only cookie)
+      localStorage.setItem('admin_user', JSON.stringify(response.data.admin));
       
       return response.data;
     } catch (error) {
@@ -29,15 +32,28 @@ export const authService = {
   },
   
   // Logout admin
-  logout: () => {
-    localStorage.removeItem('admin_access_token');
-    localStorage.removeItem('admin_refresh_token');
-    localStorage.removeItem('admin_user');
+  logout: async () => {
+    try {
+      await axios.post(`${API_BASE_URL}/admin/auth/logout`, {}, {
+        withCredentials: true
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.removeItem('admin_user');
+    }
   },
   
   // Check if user is logged in
-  isLoggedIn: () => {
-    return !!localStorage.getItem('admin_access_token');
+  isLoggedIn: async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/admin/auth/verify`, {
+        withCredentials: true
+      });
+      return response.data.success;
+    } catch (error) {
+      return false;
+    }
   },
   
   // Get current user
@@ -46,28 +62,23 @@ export const authService = {
     return userJson ? JSON.parse(userJson) : null;
   },
   
-  // Refresh token
-  refreshToken: async () => {
+  // Verify authentication
+  verifyAuth: async () => {
     try {
-      const refreshToken = localStorage.getItem('admin_refresh_token');
-      
-      if (!refreshToken) {
-        throw new Error('No refresh token available');
-      }
-      
-      const response = await axios.post(`${API_BASE_URL}/admin/auth/refresh-token`, {
-        refresh_token: refreshToken
+      const response = await axios.get(`${API_BASE_URL}/admin/auth/verify`, {
+        withCredentials: true
       });
       
-      localStorage.setItem('admin_access_token', response.data.access_token);
-      localStorage.setItem('admin_refresh_token', response.data.refresh_token);
+      if (response.data.success) {
+        localStorage.setItem('admin_user', JSON.stringify(response.data.admin));
+        return response.data.admin;
+      }
       
-      return response.data;
+      return null;
     } catch (error) {
-      console.error('Token refresh error:', error.response?.data || error.message);
-      // If refresh fails, logout
-      authService.logout();
-      throw error;
+      console.error('Auth verification error:', error.response?.data || error.message);
+      localStorage.removeItem('admin_user');
+      return null;
     }
   }
 };
