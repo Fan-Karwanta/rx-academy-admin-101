@@ -9,7 +9,7 @@ const ProtectedRoute = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/admin/auth/me`, {
+        const response = await fetch(`${API_BASE_URL}/admin/auth/verify`, {
           method: 'GET',
           credentials: 'include',
         });

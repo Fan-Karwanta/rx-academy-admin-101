@@ -16,7 +16,7 @@ const DashboardPage = () => {
   const fetchMetrics = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/api/admin/metrics/overview?range=${timeRange}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/metrics/overview?range=${timeRange}`, {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',

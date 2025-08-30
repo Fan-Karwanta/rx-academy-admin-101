@@ -33,7 +33,7 @@ const UsersPage = () => {
         ...(verifiedFilter && { verified: verifiedFilter }),
       });
 
-      const response = await fetch(`${API_BASE_URL}/api/admin/users?${params}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/users?${params}`, {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
@@ -61,7 +61,7 @@ const UsersPage = () => {
 
   const handleVerifyUser = async (userId, verify) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
         method: 'PATCH',
         credentials: 'include',
         headers: {
@@ -81,7 +81,7 @@ const UsersPage = () => {
   const handleBlockUser = async (userId, block) => {
     try {
       const endpoint = block ? 'block' : 'unblock';
-      const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/${endpoint}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/${endpoint}`, {
         method: 'POST',
         credentials: 'include',
       });
@@ -96,7 +96,7 @@ const UsersPage = () => {
 
   const fetchSavedDestinations = async (userId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/saved-destinations`, {
+      const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/saved-destinations`, {
         credentials: 'include',
       });
 

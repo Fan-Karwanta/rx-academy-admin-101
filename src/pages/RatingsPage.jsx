@@ -28,7 +28,7 @@ const RatingsPage = () => {
         ...(maxRating && { max: maxRating }),
       });
 
-      const response = await fetch(`${API_BASE_URL}/api/admin/ratings?${params}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/ratings?${params}`, {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
@@ -50,7 +50,7 @@ const RatingsPage = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this rating?')) {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/admin/ratings/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/admin/ratings/${id}`, {
           method: 'DELETE',
           credentials: 'include',
         });
@@ -100,7 +100,7 @@ const RatingsPage = () => {
     const handleSubmit = async (e) => {
       e.preventDefault();
       try {
-        const response = await fetch(`${API_BASE_URL}/api/admin/ratings/${rating._id}`, {
+        const response = await fetch(`${API_BASE_URL}/admin/ratings/${rating._id}`, {
           method: 'PATCH',
           credentials: 'include',
           headers: {

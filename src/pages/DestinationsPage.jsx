@@ -30,7 +30,7 @@ const DestinationsPage = () => {
         ...(selectedCategory && { category: selectedCategory }),
       });
 
-      const response = await fetch(`${API_BASE_URL}/api/admin/destinations?${params}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/destinations?${params}`, {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
@@ -52,7 +52,7 @@ const DestinationsPage = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this destination? This action cannot be undone.')) {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/admin/destinations/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/admin/destinations/${id}`, {
           method: 'DELETE',
           credentials: 'include',
         });
@@ -106,7 +106,7 @@ const DestinationsPage = () => {
         const uploadFormData = new FormData();
         uploadFormData.append('image', file);
 
-        const response = await fetch(`${API_BASE_URL}/api/admin/uploads/image`, {
+        const response = await fetch(`${API_BASE_URL}/admin/uploads/image`, {
           method: 'POST',
           credentials: 'include',
           body: uploadFormData,
@@ -155,8 +155,8 @@ const DestinationsPage = () => {
 
       try {
         const url = isEdit 
-          ? `${API_BASE_URL}/api/admin/destinations/${destination._id}`
-          : `${API_BASE_URL}/api/admin/destinations`;
+          ? `${API_BASE_URL}/admin/destinations/${destination._id}`
+          : `${API_BASE_URL}/admin/destinations`;
         
         const method = isEdit ? 'PATCH' : 'POST';
 

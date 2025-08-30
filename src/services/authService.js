@@ -9,7 +9,7 @@ export const authService = {
       console.log('Attempting login with:', { email });
       
       // Use the special admin login endpoint
-      const response = await axios.post(`${API_BASE_URL}/api/auth/admin-login`, {
+      const response = await axios.post(`${API_BASE_URL}/admin/auth/login`, {
         email,
         password
       });
@@ -55,7 +55,7 @@ export const authService = {
         throw new Error('No refresh token available');
       }
       
-      const response = await axios.post(`${API_BASE_URL}/api/auth/refresh-token`, {
+      const response = await axios.post(`${API_BASE_URL}/admin/auth/refresh-token`, {
         refresh_token: refreshToken
       });
       
