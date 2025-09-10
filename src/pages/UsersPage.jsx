@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, UserCheck, UserX, Search, Edit, Shield, ShieldOff, Heart, Eye } from 'lucide-react';
-import { API_BASE_URL } from '../config';
+import { Search, Filter, MoreHorizontal, Edit, Trash2, UserPlus, Download, Eye, Mail, Calendar, Shield, Star, Users, UserCheck, UserX, ShieldOff, X, Save } from 'lucide-react';
+import { usersAPI } from '../services/api.js';
 
 const UsersPage = () => {
   const [users, setUsers] = useState([]);
@@ -18,39 +18,44 @@ const UsersPage = () => {
   const [showUserModal, setShowUserModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createUserData, setCreateUserData] = useState({
+    email: '',
+    password: '',
+    fullName: '',
+    subscriptionStatus: 'unpaid'
+  });
+  const [editUserData, setEditUserData] = useState({
+    subscriptionStatus: '',
+    subscriptionTier: ''
+  });
+  const [isCreating, setIsCreating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     fetchUsers();
   }, [currentPage, searchQuery, verifiedFilter]);
 
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams({
+      
+      const params = {
         page: currentPage,
         limit: 10,
-        ...(searchQuery && { q: searchQuery }),
-        ...(verifiedFilter && { verified: verifiedFilter }),
-      });
-
-      const response = await fetch(`${API_BASE_URL}/admin/users?${params}`, {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUsers(data.users);
-        setTotalPages(data.pagination.pages);
-        
-        // Calculate stats
-        setStats({
-          total: data.pagination.total,
-          verified: data.users.filter(u => u.isVerified).length,
-          blocked: data.users.filter(u => u.status === 'blocked').length
-        });
+        search: searchQuery || undefined,
+        subscriptionStatus: verifiedFilter === 'active' ? 'active' : verifiedFilter === 'false' ? 'inactive' : undefined
+      };
+      
+      const response = await usersAPI.getAll(params);
+      
+      if (response.success) {
+        setUsers(response.data.users);
+        setTotalPages(response.data.pagination.pages);
       }
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -59,20 +64,28 @@ const UsersPage = () => {
     }
   };
 
+  const fetchStats = async () => {
+    try {
+      const statsResponse = await usersAPI.getStats();
+      if (statsResponse.success) {
+        setStats({
+          total: statsResponse.data.totalUsers,
+          verified: statsResponse.data.activeSubscriptions,
+          blocked: statsResponse.data.totalUsers - statsResponse.data.activeSubscriptions
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
+
   const handleVerifyUser = async (userId, verify) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ isVerified: verify }),
+      await usersAPI.update(userId, { 
+        subscriptionStatus: verify ? 'active' : 'inactive' 
       });
-
-      if (response.ok) {
-        fetchUsers();
-      }
+      fetchUsers();
+      fetchStats(); // Refresh stats after user update
     } catch (error) {
       console.error('Error updating user:', error);
     }
@@ -80,34 +93,81 @@ const UsersPage = () => {
 
   const handleBlockUser = async (userId, block) => {
     try {
-      const endpoint = block ? 'block' : 'unblock';
-      const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/${endpoint}`, {
-        method: 'POST',
-        credentials: 'include',
+      await usersAPI.update(userId, { 
+        subscriptionStatus: block ? 'cancelled' : 'active' 
       });
-
-      if (response.ok) {
-        fetchUsers();
-      }
+      fetchUsers();
     } catch (error) {
       console.error('Error updating user status:', error);
     }
   };
 
-  const fetchSavedDestinations = async (userId) => {
+  const handleDeleteUser = async (userId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/saved-destinations`, {
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return data.savedDestinations;
-      }
+      await usersAPI.delete(userId);
+      fetchUsers();
     } catch (error) {
-      console.error('Error fetching saved destinations:', error);
+      console.error('Error deleting user:', error);
     }
-    return [];
+  };
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    setIsCreating(true);
+    try {
+      await usersAPI.createByAdmin(createUserData);
+      setShowCreateModal(false);
+      setCreateUserData({
+        email: '',
+        password: '',
+        fullName: '',
+        subscriptionStatus: 'unpaid'
+      });
+      fetchUsers();
+    } catch (error) {
+      console.error('Error creating user:', error);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleEditUser = (user) => {
+    setSelectedUser(user);
+    setEditUserData({
+      subscriptionStatus: user.subscriptionStatus === 'active' ? 'paid' : 'unpaid',
+      subscriptionTier: user.subscriptionTier
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateUser = async (e) => {
+    e.preventDefault();
+    setIsUpdating(true);
+    try {
+      console.log('Updating user:', selectedUser._id);
+      console.log('Update data:', editUserData);
+      
+      // Map frontend values to backend values
+      const backendData = {
+        subscriptionStatus: editUserData.subscriptionStatus === 'paid' ? 'active' : 'inactive',
+        subscriptionTier: editUserData.subscriptionTier,
+        fullName: selectedUser.fullName // Include fullName to prevent issues
+      };
+      
+      console.log('Backend data:', backendData);
+      
+      const response = await usersAPI.update(selectedUser._id, backendData);
+      console.log('Update response:', response);
+      
+      setShowEditModal(false);
+      fetchUsers();
+      fetchStats(); // Refresh stats after user update
+    } catch (error) {
+      console.error('Error updating user:', error);
+      console.error('Error details:', error.response?.data);
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const StatCard = ({ title, value, icon: Icon, color }) => (
@@ -268,6 +328,13 @@ const UsersPage = () => {
           <h1 className="text-3xl font-bold text-white">User Management</h1>
           <p className="text-gray-400 mt-1">Manage registered users and their profiles</p>
         </div>
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center space-x-2 px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-200 transition-colors"
+        >
+          <UserPlus className="h-4 w-4" />
+          <span>Create User</span>
+        </button>
       </div>
 
       {/* Stats */}
@@ -345,8 +412,8 @@ const UsersPage = () => {
                           )}
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-white">{user.name}</div>
-                          <div className="text-sm text-gray-400">{user.location}</div>
+                          <div className="text-sm font-medium text-white">{user.fullName}</div>
+                          <div className="text-sm text-gray-400">{user.email}</div>
                         </div>
                       </div>
                     </td>
@@ -357,13 +424,20 @@ const UsersPage = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-2">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          user.isVerified ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          user.subscriptionStatus === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                         }`}>
-                          {user.isVerified ? 'Verified' : 'Unverified'}
+                          {user.subscriptionStatus === 'active' ? 'Paid' : 'Unpaid'}
                         </span>
-                        {user.status === 'blocked' && (
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          user.subscriptionTier === 'premium' ? 'bg-blue-100 text-blue-800' : 
+                          user.subscriptionTier === 'enterprise' ? 'bg-purple-100 text-purple-800' : 
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {user.subscriptionTier || 'Free'}
+                        </span>
+                        {user.subscriptionStatus === 'cancelled' && (
                           <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                            Blocked
+                            Cancelled
                           </span>
                         )}
                       </div>
@@ -383,16 +457,22 @@ const UsersPage = () => {
                           <Eye className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleVerifyUser(user._id, !user.isVerified)}
-                          className={`${user.isVerified ? 'text-red-400 hover:text-red-300' : 'text-green-400 hover:text-green-300'}`}
+                          onClick={() => handleVerifyUser(user._id, user.subscriptionStatus !== 'active')}
+                          className={`${user.subscriptionStatus === 'active' ? 'text-red-400 hover:text-red-300' : 'text-green-400 hover:text-green-300'}`}
                         >
-                          {user.isVerified ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                          {user.subscriptionStatus === 'active' ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
                         </button>
                         <button
-                          onClick={() => handleBlockUser(user._id, user.status !== 'blocked')}
-                          className={`${user.status === 'blocked' ? 'text-green-400 hover:text-green-300' : 'text-red-400 hover:text-red-300'}`}
+                          onClick={() => handleEditUser(user)}
+                          className="text-yellow-400 hover:text-yellow-300"
                         >
-                          {user.status === 'blocked' ? <Shield className="h-4 w-4" /> : <ShieldOff className="h-4 w-4" />}
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleBlockUser(user._id, user.subscriptionStatus !== 'cancelled')}
+                          className={`${user.subscriptionStatus === 'cancelled' ? 'text-green-400 hover:text-green-300' : 'text-red-400 hover:text-red-300'}`}
+                        >
+                          {user.subscriptionStatus === 'cancelled' ? <Shield className="h-4 w-4" /> : <ShieldOff className="h-4 w-4" />}
                         </button>
                       </div>
                     </td>
@@ -429,6 +509,179 @@ const UsersPage = () => {
         onClose={() => setShowUserModal(false)}
         user={selectedUser}
       />
+
+      {/* Create User Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-lg w-full max-w-md">
+            <div className="p-6 border-b border-gray-800">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold text-white">Create New User</h2>
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            
+            <form onSubmit={handleCreateUser} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={createUserData.fullName}
+                  onChange={(e) => setCreateUserData({...createUserData, fullName: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-white"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={createUserData.email}
+                  onChange={(e) => setCreateUserData({...createUserData, email: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-white"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={createUserData.password}
+                  onChange={(e) => setCreateUserData({...createUserData, password: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-white"
+                  required
+                  minLength="6"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Membership Status
+                </label>
+                <select
+                  value={createUserData.subscriptionStatus}
+                  onChange={(e) => setCreateUserData({...createUserData, subscriptionStatus: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-white"
+                >
+                  <option value="unpaid">Unpaid (No Magazine Access)</option>
+                  <option value="paid">Paid (Full Magazine Access)</option>
+                </select>
+              </div>
+              
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreating}
+                  className="flex items-center space-x-2 px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-200 disabled:opacity-50"
+                >
+                  <Save className="h-4 w-4" />
+                  <span>{isCreating ? 'Creating...' : 'Create User'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {showEditModal && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-lg w-full max-w-md">
+            <div className="p-6 border-b border-gray-800">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold text-white">Edit User: {selectedUser.fullName}</h2>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            
+            <form onSubmit={handleUpdateUser} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Email (Read Only)
+                </label>
+                <input
+                  type="email"
+                  value={selectedUser.email}
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-400"
+                  disabled
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Membership Status
+                </label>
+                <select
+                  value={editUserData.subscriptionStatus}
+                  onChange={(e) => setEditUserData({...editUserData, subscriptionStatus: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-white"
+                >
+                  <option value="unpaid">Unpaid (No Magazine Access)</option>
+                  <option value="paid">Paid (Full Magazine Access)</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Subscription Tier
+                </label>
+                <select
+                  value={editUserData.subscriptionTier}
+                  onChange={(e) => setEditUserData({...editUserData, subscriptionTier: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-white"
+                >
+                  <option value="free">Free</option>
+                  <option value="premium">Premium</option>
+                  <option value="enterprise">Enterprise</option>
+                </select>
+              </div>
+              
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUpdating}
+                  className="flex items-center space-x-2 px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-200 disabled:opacity-50"
+                >
+                  <Save className="h-4 w-4" />
+                  <span>{isUpdating ? 'Updating...' : 'Update User'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

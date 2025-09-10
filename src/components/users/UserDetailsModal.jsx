@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, CheckCircle, XCircle, Trash2, Edit3, Image as ImageIcon, ZoomIn, ZoomOut, Maximize, Minimize, RotateCw, Download } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { userService } from '../../services/userService';
+import { usersAPI } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
 
 // Advanced image viewer component with full-screen modal and zoom controls
@@ -270,7 +270,8 @@ const UserDetailsModal = ({ user, onClose, onUserUpdated }) => {
       setLoading(true);
       setError(null);
       setSuccess(null);
-      const updatedUser = await userService.approveUser(user._id);
+      // TODO: Implement approveUser endpoint in backend
+      const updatedUser = await usersAPI.update(user._id, { approved: true });
       console.log('User approved successfully:', updatedUser);
       onUserUpdated(updatedUser);
       onClose();
@@ -299,7 +300,8 @@ const UserDetailsModal = ({ user, onClose, onUserUpdated }) => {
       setLoading(true);
       setError(null);
       setSuccess(null);
-      const updatedUser = await userService.disapproveUser(user._id, { reason: disapproveReason });
+      // TODO: Implement disapproveUser endpoint in backend
+      const updatedUser = await usersAPI.update(user._id, { approved: false, disapprovalReason: disapproveReason });
       console.log('User disapproved successfully:', updatedUser);
       onUserUpdated(updatedUser);
       onClose();
@@ -348,7 +350,8 @@ const UserDetailsModal = ({ user, onClose, onUserUpdated }) => {
     try {
       setLoading(true);
       setError(null);
-      const updatedUser = await userService.addPenalty(user._id, { 
+      // TODO: Implement addPenalty endpoint in backend
+      const updatedUser = await usersAPI.update(user._id, { 
         penaltyComment,
         penaltyLiftDate
       });
@@ -394,7 +397,7 @@ const UserDetailsModal = ({ user, onClose, onUserUpdated }) => {
       try {
         setLoading(true);
         setError(null);
-        await userService.deleteUser(user._id);
+        await usersAPI.delete(user._id);
         onUserUpdated();
         onClose();
       } catch (err) {
@@ -418,7 +421,7 @@ const UserDetailsModal = ({ user, onClose, onUserUpdated }) => {
     try {
       setLoading(true);
       setError(null);
-      const updatedUser = await userService.updateUser(user._id, userData);
+      const updatedUser = await usersAPI.update(user._id, userData);
       setEditMode(false);
       setSuccess('User updated successfully');
       onUserUpdated(updatedUser);

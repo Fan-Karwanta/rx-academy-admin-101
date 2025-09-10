@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Navigate, Outlet } from "react-router-dom";
-import { API_BASE_URL } from "../../config";
+import authService from "../../services/auth.js";
 
 const ProtectedRoute = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
@@ -9,12 +9,10 @@ const ProtectedRoute = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/admin/auth/verify`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        if (response.ok) {
+        // Check if user is authenticated
+        if (authService.isAuthenticated()) {
+          // Verify token is still valid
+          await authService.getCurrentUser();
           setIsAuthenticated(true);
         } else {
           setIsAuthenticated(false);

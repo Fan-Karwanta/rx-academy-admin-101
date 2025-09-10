@@ -1,8 +1,8 @@
-import { BarChart2, Menu, MapPin, Users, LogOut, Star } from "lucide-react";
+import { BarChart2, Menu, Users, LogOut, Archive } from "lucide-react";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Link, useLocation } from "react-router-dom";
-import { API_BASE_URL } from '../../config';
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import authService from '../../services/auth.js';
 
 const SIDEBAR_ITEMS = [
 	{
@@ -12,22 +12,16 @@ const SIDEBAR_ITEMS = [
 		href: "/",
 	},
 	{ 
-		name: "Users", 
+		name: "User Management", 
 		icon: Users, 
 		color: "#ffffff", 
 		href: "/users" 
 	},
 	{ 
-		name: "Destinations", 
-		icon: MapPin, 
+		name: "Archive Storage", 
+		icon: Archive, 
 		color: "#ffffff", 
-		href: "/destinations" 
-	},
-	{ 
-		name: "Ratings", 
-		icon: Star, 
-		color: "#ffffff", 
-		href: "/ratings" 
+		href: "/archive" 
 	},
 ];
 
@@ -35,19 +29,14 @@ const Sidebar = () => {
 	const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 	const [showLogoutModal, setShowLogoutModal] = useState(false);
 	const location = useLocation();
+	const navigate = useNavigate();
 
 	const handleLogout = async () => {
 		try {
-			const response = await fetch(`${API_BASE_URL}/api/admin/auth/logout`, {
-				method: 'POST',
-				credentials: 'include',
-			});
-
-			if (response.ok) {
-				window.location.href = '/login';
-			}
+			await authService.logout();
+			navigate('/login');
 		} catch (error) {
-			console.error('Logout error:', error);
+			console.error('Logout failed:', error);
 		}
 	};
 
@@ -79,7 +68,7 @@ const Sidebar = () => {
 								className='flex items-center justify-center mb-8'
 							>
 								<div className="text-center">
-									<h1 className="text-2xl font-bold text-white">MOTOUR</h1>
+									<h1 className="text-2xl font-bold text-white">RX LIFESTYLE</h1>
 									<p className="text-gray-400 text-sm">Admin Panel</p>
 								</div>
 							</motion.div>

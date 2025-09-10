@@ -1,40 +1,28 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { User, Lock, LogIn, Eye, EyeOff } from "lucide-react";
-import { API_BASE_URL } from '../config';
+import authService from '../services/auth.js';
+import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
-	const [username, setUsername] = useState("");
+	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState("");
+	const navigate = useNavigate();
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setIsLoading(true);
 		setError("");
-		
+
 		try {
-			const response = await fetch(`${API_BASE_URL}/admin/auth/login`, {
-				method: 'POST',
-				credentials: 'include',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ username, password }),
-			});
-
-			const data = await response.json();
-
-			if (response.ok) {
-				window.location.href = '/';
-			} else {
-				setError(data.message || 'Login failed');
-			}
+			await authService.login(email, password);
+			navigate('/');
 		} catch (error) {
 			console.error("Login failed:", error);
-			setError('Network error. Please try again.');
+			setError(error.response?.data?.message || error.message || 'Login failed');
 		} finally {
 			setIsLoading(false);
 		}
@@ -51,7 +39,7 @@ const LoginPage = () => {
 						className='mx-auto flex justify-center mb-8'
 					>
 						<div className="text-center">
-							<h1 className="text-4xl font-bold text-white mb-2">MOTOUR</h1>
+							<h1 className="text-4xl font-bold text-white mb-2">RX LIFESTYLE</h1>
 							<p className="text-gray-400">Admin Panel</p>
 						</div>
 					</motion.div>
@@ -87,23 +75,23 @@ const LoginPage = () => {
 
 					<div className='space-y-4'>
 						<div>
-							<label htmlFor='username' className='sr-only'>
-								Username
+							<label htmlFor='email' className='sr-only'>
+								Email
 							</label>
 							<div className='relative'>
 								<div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
 									<User className="h-5 w-5 text-gray-400" />
 								</div>
 								<input
-									id='username'
-									name='username'
-									type='text'
-									autoComplete='username'
+									id='email'
+									name='email'
+									type='email'
+									autoComplete='email'
 									required
 									className="appearance-none relative block w-full px-3 py-3 pl-10 border border-gray-700 bg-gray-900 text-white placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:border-white sm:text-sm"
-									placeholder='Username'
-									value={username}
-									onChange={(e) => setUsername(e.target.value)}
+									placeholder='Email Address'
+									value={email}
+									onChange={(e) => setEmail(e.target.value)}
 								/>
 							</div>
 						</div>
@@ -159,7 +147,7 @@ const LoginPage = () => {
 					</div>
 
 					<div className="text-center text-sm text-gray-400">
-						<p>2025 © MoTour Admin Panel. All rights reserved.</p>
+						<p>2025 © RX Admin Panel. All rights reserved.</p>
 					</div>
 				</motion.form>
 			</div>
