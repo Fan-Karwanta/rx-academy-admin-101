@@ -136,7 +136,7 @@ const LoginPage = () => {
 							animate={{ opacity: 1 }}
 							transition={{ delay: 0.6, duration: 0.5 }}
 						>
-							Sign in to access your admin dashboard
+							Sign in to access your admin dashboard.
 						</motion.p>
 					</div>
 					{/* Form Section */}
