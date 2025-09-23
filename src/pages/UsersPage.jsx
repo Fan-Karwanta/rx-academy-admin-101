@@ -21,7 +21,7 @@ const UsersPage = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createUserData, setCreateUserData] = useState({
     email: '',
-    password: '',
+    password: 'rxacademy2025',
     fullName: '',
     subscriptionStatus: 'unpaid'
   });
@@ -119,7 +119,7 @@ const UsersPage = () => {
       setShowCreateModal(false);
       setCreateUserData({
         email: '',
-        password: '',
+        password: 'rxacademy2025',
         fullName: '',
         subscriptionStatus: 'unpaid'
       });
@@ -564,7 +564,9 @@ const UsersPage = () => {
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-white"
                   required
                   minLength="6"
+                  placeholder="Default: rxacademy2025"
                 />
+                <p className="text-xs text-gray-400 mt-1">Default password is set to 'rxacademy2025'. Users can change it later.</p>
               </div>
               
               <div>
