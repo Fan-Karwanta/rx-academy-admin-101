@@ -185,6 +185,17 @@ export const adminAPI = {
   updateUserSubscription: async (id, data) => {
     const response = await api.put(`/admin/users/${id}/subscription`, data);
     return response.data;
+  },
+  
+  // Subscription confirmation endpoints
+  getPendingRegistrations: async (params = {}) => {
+    const response = await api.get('/admin/pending-registrations', { params });
+    return response.data;
+  },
+  
+  updateRegistrationStatus: async (id, data) => {
+    const response = await api.put(`/admin/users/${id}/registration-status`, data);
+    return response.data;
   }
 };
 

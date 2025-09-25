@@ -26,7 +26,6 @@ const DashboardPage = () => {
           totalUsers: data.totalUsers,
           activeSubscriptions: data.activeSubscriptions,
           totalAdmins: data.totalAdmins,
-          estimatedRevenue: data.estimatedRevenue,
           newUsersThisWeek: data.newUsersThisWeek,
           recentActivity: data.recentActivity,
           subscriptionBreakdown: data.subscriptionBreakdown,
@@ -136,10 +135,10 @@ const DashboardPage = () => {
           trend="up"
         />
         <StatCard
-          title="Revenue (Est.)"
-          value={`$${(metrics?.estimatedRevenue / 100).toFixed(2) || '0.00'}`}
-          change="Monthly recurring"
-          icon={TrendingUp}
+          title="User Engagement"
+          value={`${Math.round((metrics?.recentActivity / metrics?.totalUsers) * 100) || 0}%`}
+          change="Activity rate"
+          icon={Heart}
           trend="up"
         />
         <StatCard
@@ -237,8 +236,8 @@ const DashboardPage = () => {
               <span className="text-blue-400 font-semibold">{metrics?.totalAdmins || 0}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-400">Monthly Revenue</span>
-              <span className="text-yellow-400 font-semibold">${(metrics?.estimatedRevenue / 100).toFixed(2) || '0.00'}</span>
+              <span className="text-gray-400">User Engagement Rate</span>
+              <span className="text-yellow-400 font-semibold">{Math.round((metrics?.recentActivity / metrics?.totalUsers) * 100) || 0}%</span>
             </div>
           </div>
         </motion.div>
