@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Search, Filter, MoreHorizontal, Edit, Trash2, UserPlus, Download, Eye, Mail, Calendar, Shield, Star, Users, UserCheck, UserX, ShieldOff, X, Save } from 'lucide-react';
 import { usersAPI } from '../services/api.js';
 
@@ -171,11 +170,7 @@ const UsersPage = () => {
   };
 
   const StatCard = ({ title, value, icon: Icon, color }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`bg-gray-900 border border-gray-800 rounded-lg p-6 hover:border-gray-700 transition-colors`}
-    >
+    <div className={`bg-gray-900 border border-gray-800 rounded-lg p-6 hover:border-gray-700 transition-colors`}>
       <div className="flex items-center justify-between">
         <div>
           <p className="text-gray-400 text-sm font-medium">{title}</p>
@@ -185,22 +180,11 @@ const UsersPage = () => {
           <Icon className="h-6 w-6 text-white" />
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 
   const UserModal = ({ isOpen, onClose, user }) => {
-    const [savedDestinations, setSavedDestinations] = useState([]);
-    const [loadingSaved, setLoadingSaved] = useState(false);
-
-    useEffect(() => {
-      if (user && isOpen) {
-        setLoadingSaved(true);
-        fetchSavedDestinations(user._id).then(destinations => {
-          setSavedDestinations(destinations);
-          setLoadingSaved(false);
-        });
-      }
-    }, [user, isOpen]);
+    // Removed saved destinations functionality as it's not applicable to this system
 
     if (!isOpen || !user) return null;
 
@@ -226,25 +210,35 @@ const UsersPage = () => {
                     )}
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-white">{user.name}</h3>
+                    <h3 className="text-lg font-semibold text-white">{user.fullName}</h3>
                     <p className="text-gray-400">{user.email}</p>
                   </div>
                 </div>
                 
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Phone:</span>
-                    <span className="text-white">{user.phone || 'Not provided'}</span>
+                    <span className="text-gray-400">Mobile Number:</span>
+                    <span className="text-white">{user.mobileNumber || 'Not provided'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Location:</span>
-                    <span className="text-white">{user.location}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Verified:</span>
-                    <span className={`${user.isVerified ? 'text-green-500' : 'text-red-500'}`}>
-                      {user.isVerified ? 'Yes' : 'No'}
+                    <span className="text-gray-400">Subscription Status:</span>
+                    <span className={`${user.subscriptionStatus === 'active' ? 'text-green-500' : 'text-red-500'}`}>
+                      {user.subscriptionStatus || 'Inactive'}
                     </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Subscription Tier:</span>
+                    <span className="text-white">{user.subscriptionTier || 'Free'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Email Verified:</span>
+                    <span className={`${user.isEmailVerified ? 'text-green-500' : 'text-red-500'}`}>
+                      {user.isEmailVerified ? 'Yes' : 'No'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Registration Status:</span>
+                    <span className="text-white">{user.registrationStatus || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Member Since:</span>
@@ -254,57 +248,46 @@ const UsersPage = () => {
               </div>
               
               <div className="space-y-4">
-                <h4 className="text-lg font-semibold text-white">Statistics</h4>
+                <h4 className="text-lg font-semibold text-white">Account Information</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Trips Completed:</span>
-                    <span className="text-white">{user.tripsCompleted}</span>
+                    <span className="text-gray-400">Payment Status:</span>
+                    <span className="text-white">{user.paymentStatus || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Favorite Destinations:</span>
-                    <span className="text-white">{user.favoriteDestinations}</span>
+                    <span className="text-gray-400">Last Login:</span>
+                    <span className="text-white">{user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Total Distance:</span>
-                    <span className="text-white">{user.totalDistance}</span>
+                    <span className="text-gray-400">Admin Notes:</span>
+                    <span className="text-white">{user.adminNotes || 'None'}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Saved Destinations */}
-            <div>
-              <h4 className="text-lg font-semibold text-white mb-4">Saved Destinations</h4>
-              {loadingSaved ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+            {/* Payment Proof */}
+            {user.paymentProofUrl && (
+              <div>
+                <h4 className="text-lg font-semibold text-white mb-4">Payment Proof</h4>
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <img
+                    src={user.paymentProofUrl}
+                    alt="Payment Proof"
+                    className="max-w-full max-h-64 mx-auto rounded-lg cursor-pointer"
+                    onClick={() => window.open(user.paymentProofUrl, '_blank')}
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'block';
+                    }}
+                  />
+                  <div style={{ display: 'none' }} className="text-center py-4">
+                    <p className="text-red-400">Failed to load payment proof</p>
+                  </div>
+                  <p className="text-center text-gray-400 text-sm mt-2">Click to view full size</p>
                 </div>
-              ) : savedDestinations.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {savedDestinations.map((saved) => (
-                    <div key={saved._id} className="bg-gray-800 rounded-lg p-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 bg-gray-700 rounded-lg overflow-hidden">
-                          {saved.destinationId?.photos?.main && (
-                            <img
-                              src={saved.destinationId.photos.main}
-                              alt={saved.destinationId.name}
-                              className="w-full h-full object-cover"
-                            />
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-medium text-white">{saved.destinationId?.name}</p>
-                          <p className="text-sm text-gray-400">{saved.destinationId?.category}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-400">No saved destinations</p>
-              )}
-            </div>
+              </div>
+            )}
           </div>
           
           <div className="p-6 border-t border-gray-800 flex justify-end">
@@ -419,7 +402,7 @@ const UsersPage = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-white">{user.email}</div>
-                      <div className="text-sm text-gray-400">{user.phone || 'No phone'}</div>
+                      <div className="text-sm text-gray-400">{user.mobileNumber || 'No mobile number'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-2">

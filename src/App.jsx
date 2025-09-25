@@ -1,7 +1,9 @@
 import { Route, Routes, Navigate, Outlet } from "react-router-dom";
+import { useEffect } from "react";
 
 import Sidebar from "./components/common/Sidebar";
 import ProtectedRoute from "./components/common/ProtectedRoute";
+import AdminUpdateManager from "./utils/updateManager";
 
 import DashboardPage from "./pages/DashboardPage";
 import UsersPage from "./pages/UsersPage";
@@ -27,6 +29,19 @@ const DashboardLayout = () => {
 };
 
 function App() {
+	useEffect(() => {
+		// Initialize update manager for automatic updates
+		const updateManager = new AdminUpdateManager();
+		
+		// Store reference globally for manual checks
+		window.adminUpdateManager = updateManager;
+		
+		// Cleanup on unmount
+		return () => {
+			updateManager.destroy();
+		};
+	}, []);
+
 	return (
 		<Routes>
 			{/* Public routes */}
