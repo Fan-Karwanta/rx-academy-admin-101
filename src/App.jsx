@@ -6,6 +6,7 @@ import ProtectedRoute from "./components/common/ProtectedRoute";
 import DashboardPage from "./pages/DashboardPage";
 import UsersPage from "./pages/UsersPage";
 import ArchiveStoragePage from "./pages/ArchiveStoragePage";
+import SubscriptionConfirmationPage from "./pages/SubscriptionConfirmationPage";
 import LoginPage from "./pages/LoginPage";
 
 // Layout component for authenticated pages
@@ -36,6 +37,7 @@ function App() {
 				<Route element={<DashboardLayout />}>
 					<Route path="/" element={<DashboardPage />} />
 					<Route path="/users" element={<UsersPage />} />
+					<Route path="/subscriptions" element={<SubscriptionConfirmationPage />} />
 					<Route path="/archive" element={<ArchiveStoragePage />} />
 				</Route>
 			</Route>

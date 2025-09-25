@@ -1,4 +1,4 @@
-import { BarChart2, Menu, Users, LogOut, Archive } from "lucide-react";
+import { BarChart2, Menu, Users, LogOut, Archive, CreditCard } from "lucide-react";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -16,6 +16,12 @@ const SIDEBAR_ITEMS = [
 		icon: Users, 
 		color: "#ffffff", 
 		href: "/users" 
+	},
+	{ 
+		name: "Subs Confirmations", 
+		icon: CreditCard, 
+		color: "#ffffff", 
+		href: "/subscriptions" 
 	},
 	{ 
 		name: "Archive Storage", 
