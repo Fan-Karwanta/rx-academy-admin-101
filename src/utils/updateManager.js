@@ -7,6 +7,7 @@ class AdminUpdateManager {
   constructor() {
     this.currentVersion = this.getCurrentVersion();
     this.checkInterval = null;
+    this.lastNotifiedVersion = localStorage.getItem('admin-last-notified-version');
     this.init();
   }
 
@@ -60,9 +61,11 @@ class AdminUpdateManager {
         if (scriptMatches || cssMatches) {
           const newVersion = this.generateVersionFromAssets(scriptMatches, cssMatches);
           
-          if (newVersion !== this.currentVersion) {
+          if (newVersion !== this.currentVersion && newVersion !== this.lastNotifiedVersion) {
             console.log('🔄 New admin panel version detected!');
             this.showUpdateNotification();
+            this.lastNotifiedVersion = newVersion;
+            localStorage.setItem('admin-last-notified-version', newVersion);
           }
         }
       }
@@ -193,7 +196,7 @@ class AdminUpdateManager {
     });
 
     document.getElementById('admin-update-later-btn').addEventListener('click', () => {
-      this.dismissNotification();
+      this.dismissNotificationPermanently();
     });
 
     // Auto-dismiss after 15 seconds
@@ -246,6 +249,7 @@ class AdminUpdateManager {
 
       // Clear localStorage version info
       localStorage.removeItem('admin-version');
+      localStorage.removeItem('admin-last-notified-version');
       sessionStorage.clear();
 
       // Wait a moment
@@ -268,6 +272,23 @@ class AdminUpdateManager {
         notification.remove();
       }, 300);
     }
+  }
+
+  dismissNotificationPermanently() {
+    // Mark this version as seen so we don't show the notification again
+    const currentAssets = this.generateVersionFromCurrentPage();
+    if (currentAssets) {
+      localStorage.setItem('admin-last-notified-version', currentAssets);
+      this.lastNotifiedVersion = currentAssets;
+    }
+    this.dismissNotification();
+  }
+
+  generateVersionFromCurrentPage() {
+    // Get current page assets to generate version
+    const scripts = Array.from(document.querySelectorAll('script[src*="assets/"]')).map(s => s.src.split('/').pop());
+    const styles = Array.from(document.querySelectorAll('link[href*="assets/"]')).map(l => l.href.split('/').pop());
+    return this.generateVersionFromAssets(scripts, styles);
   }
 
   // Manual update check

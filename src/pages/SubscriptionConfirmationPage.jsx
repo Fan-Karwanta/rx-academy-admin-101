@@ -14,6 +14,7 @@ import {
   Search,
   Filter
 } from 'lucide-react';
+import { adminAPI } from '../services/api.js';
 
 const SubscriptionConfirmationPage = () => {
   const [pendingUsers, setPendingUsers] = useState([]);
@@ -34,23 +35,17 @@ const SubscriptionConfirmationPage = () => {
   const fetchPendingRegistrations = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('rx_admin_token');
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/admin/pending-registrations?page=${currentPage}&limit=10&status=${statusFilter}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const response = await adminAPI.getPendingRegistrations({
+        page: currentPage,
+        limit: 10,
+        status: statusFilter
+      });
 
-      if (response.ok) {
-        const data = await response.json();
-        setPendingUsers(data.data.users);
-        setTotalPages(data.data.pagination.pages);
+      if (response.success) {
+        setPendingUsers(response.data.users);
+        setTotalPages(response.data.pagination.pages);
       } else {
-        console.error('Failed to fetch pending registrations');
+        console.error('Failed to fetch pending registrations:', response.message);
       }
     } catch (error) {
       console.error('Error fetching pending registrations:', error);
@@ -62,32 +57,19 @@ const SubscriptionConfirmationPage = () => {
   const handleAction = async (userId, action) => {
     try {
       setActionLoading(true);
-      const token = localStorage.getItem('rx_admin_token');
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/admin/users/${userId}/registration-status`,
-        {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            action,
-            adminNotes: adminNotes.trim() || undefined
-          })
-        }
-      );
+      const response = await adminAPI.updateRegistrationStatus(userId, {
+        action,
+        adminNotes: adminNotes.trim() || undefined
+      });
 
-      if (response.ok) {
-        const result = await response.json();
+      if (response.success) {
         alert(`Registration ${action}d successfully!`);
         setShowModal(false);
         setSelectedUser(null);
         setAdminNotes('');
         fetchPendingRegistrations(); // Refresh the list
       } else {
-        const error = await response.json();
-        alert(`Failed to ${action} registration: ${error.message}`);
+        alert(`Failed to ${action} registration: ${response.message}`);
       }
     } catch (error) {
       console.error(`Error ${action}ing registration:`, error);

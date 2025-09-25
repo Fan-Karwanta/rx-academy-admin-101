@@ -2,10 +2,14 @@ import axios from 'axios';
 
 // Get API base URL based on environment
 const getApiUrl = () => {
-  const isDev = import.meta.env.VITE_NODE_ENV === 'development';
-  return isDev 
-    ? import.meta.env.VITE_API_URL || 'http://localhost:5001/api'
-    : import.meta.env.VITE_API_URL_PROD || 'https://your-app-name.onrender.com/api';
+  // Check if we're in development mode
+  const isDev = import.meta.env.DEV || import.meta.env.VITE_NODE_ENV === 'development' || window.location.hostname === 'localhost';
+  
+  if (isDev) {
+    return import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+  } else {
+    return import.meta.env.VITE_API_URL_PROD || 'https://rx-academy-backend-101.onrender.com/api';
+  }
 };
 
 // Create axios instance
