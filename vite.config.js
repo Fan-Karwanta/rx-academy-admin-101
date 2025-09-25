@@ -27,13 +27,15 @@ export default defineConfig({
     copyPublicDir: true,
     // Enable cache busting
     target: 'esnext',
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
-    },
+    minify: 'esbuild', // Use esbuild instead of terser for better compatibility
+    // Alternative: you can use 'terser' if terser dependency is properly installed
+    // minify: 'terser',
+    // terserOptions: {
+    //   compress: {
+    //     drop_console: true,
+    //     drop_debugger: true,
+    //   },
+    // },
   },
   server: {
     port: 5173,
